@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CW摩斯闪卡</string>
+    <string name="title_activity_main">CW摩斯闪卡</string>
+    <string name="package_name">com.morse.flashcard</string>
+    <string name="custom_url_scheme">com.morse.flashcard</string>
+</resources>

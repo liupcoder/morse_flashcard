@@ -1,0 +1,8 @@
+{
+  "appId": "com.morse.flashcard",
+  "appName": "CW摩斯闪卡",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

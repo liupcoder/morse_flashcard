@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CW 摩斯密码闪卡 V1.3</title>
+    <style>
+        /* ========== 主题变量 ========== */
+        body {
+            --border-w: 3px;
+            --radius: 0;
+            --font-w: 900;
+            --bg: #fff;
+            --fg: #000;
+            --card-bg: #fff;
+            --card-border: #000;
+            --answer-color: #000;
+            --mini-color: #000;
+            --hint-color: #000;
+            --hint-weight: bold;
+            --btn-bg: #fff;
+            --btn-active-bg: #000;
+            --btn-active-fg: #fff;
+            --btn-disabled-bg: #fff;
+            --btn-disabled-fg: #999;
+            --btn-disabled-border: #999;
+            --tab-active-bg: #000;
+            --tab-active-fg: #fff;
+            --tab-fg: #000;
+            --tab-border: #000;
+            --setting-border: #000;
+            --setting-desc-color: #000;
+            --setting-desc-weight: bold;
+            --toggle-bg: #fff;
+            --toggle-knob: #000;
+            --toggle-active-bg: #000;
+            --toggle-active-knob: #fff;
+            --step-bg: #fff;
+            --step-active-bg: #000;
+            --step-active-fg: #fff;
+            --reset-color: #000;
+            --icon-show: none;
+            --emoji-show: inline;
+        }
+
+        body.theme-color {
+            --border-w: 2px;
+            --radius: 10px;
+            --font-w: bold;
+            --bg: #fff;
+            --fg: #000;
+            --card-bg: #fafafa;
+            --card-border: #000;
+            --answer-color: #444;
+            --mini-color: #888;
+            --hint-color: #666;
+            --hint-weight: normal;
+            --btn-bg: #e0e0e0;
+            --btn-active-bg: #999;
+            --btn-active-fg: #000;
+            --btn-disabled-bg: #f5f5f5;
+            --btn-disabled-fg: #ccc;
+            --btn-disabled-border: #ccc;
+            --tab-active-bg: transparent;
+            --tab-active-fg: #000;
+            --tab-fg: #999;
+            --tab-border: #ccc;
+            --setting-border: #eee;
+            --setting-desc-color: #888;
+            --setting-desc-weight: normal;
+            --toggle-bg: #ccc;
+            --toggle-knob: #fff;
+            --toggle-active-bg: #000;
+            --toggle-active-knob: #fff;
+            --step-bg: #e0e0e0;
+            --step-active-bg: #999;
+            --step-active-fg: #000;
+            --reset-color: #999;
+            --icon-show: none;
+            --emoji-show: inline;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        body { 
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; 
+            background-color: var(--bg); color: var(--fg); 
+            padding: 20px; max-width: 600px; margin: 0 auto; text-align: center;
+            transition: background-color .3s, color .3s;
+            -webkit-touch-callout: none;
+        }
+        h1 { margin-bottom: 20px; font-size: 24px; font-weight: var(--font-w); letter-spacing: 1px; }
+        
+
+        /* ===== Tab 导航 ===== */
+        .mode-switch { display: flex; justify-content: center; margin-bottom: 20px; border-bottom: var(--border-w) solid var(--tab-border); }
+        .mode-btn { 
+            flex: 1; padding: 12px 5px; font-size: 16px; 
+            border: none; background: transparent; cursor: pointer; 
+            font-weight: var(--font-w); color: var(--tab-fg);
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: all .2s;
+        }
+        .mode-btn.active { background: var(--tab-active-bg); color: var(--tab-active-fg); }
+        body.theme-color .mode-btn { background: transparent; color: #999; }
+        body.theme-color .mode-btn.active { color: #000; border-bottom: 3px solid #000; margin-bottom: -2px; background: transparent; }
+        .mode-btn svg { width: 18px; height: 18px; fill: currentColor; }
+        .mode-btn .emoji-icon { display: var(--emoji-show); }
+        body .mode-btn .emoji-icon { display: none; }
+        body.theme-color .mode-btn .emoji-icon { display: inline; }
+        body.theme-color .mode-btn svg { display: none; }
+
+        .page-view { display: none; }
+        .page-view.active { display: block; }
+
+        /* ===== 卡片 ===== */
+        .flashcard-container { 
+            position: relative; width: 100%; height: 300px; 
+            border: 4px solid var(--card-border); border-radius: var(--radius); 
+            margin-bottom: 15px; cursor: pointer; 
+            background-color: var(--card-bg); display: grid; place-items: center;
+            transition: all .2s;
+        }
+        body.theme-color .flashcard-container { border-width: 3px; }
+        .card-text { grid-area: 1 / 1 / 2 / 2; font-weight: var(--font-w); }
+        .text-main { font-size: 90px; line-height: 1; z-index: 2; }
+        .text-main.morse-font { font-family: "Courier New", Courier, monospace; letter-spacing: 8px; }
+        .text-answer { 
+            font-size: 50px; color: var(--answer-color); 
+            font-family: "Courier New", Courier, monospace; letter-spacing: 5px; 
+            z-index: 1; opacity: 0; visibility: hidden; 
+        }
+        .text-mini { 
+            position: absolute; top: 12px; left: 15px; 
+            font-size: 24px; font-weight: var(--font-w); color: var(--mini-color); 
+            z-index: 10; display: none; line-height: 1; 
+        }
+        .text-mini.morse-font { font-family: "Courier New", Courier, monospace; letter-spacing: 3px; }
+
+        .flashcard-container.show-answer .text-main { opacity: 0; visibility: hidden; }
+        .flashcard-container.show-answer .text-answer { opacity: 1; visibility: visible; z-index: 3; }
+        .flashcard-container.show-answer .text-mini { display: block; }
+
+        /* ===== 播放按钮 ===== */
+        .play-btn-wrap { margin-bottom: 20px; }
+        .play-btn { 
+            display: inline-flex; align-items: center; gap: 8px; 
+            padding: 10px 28px; font-size: 16px; 
+            border: 3px solid var(--fg); background-color: var(--btn-bg); color: var(--fg);
+            border-radius: var(--radius); cursor: pointer; font-weight: var(--font-w);
+            transition: all .2s;
+        }
+        body.theme-color .play-btn { border-width: 2px; border-radius: 20px; }
+        .play-btn:active { background-color: var(--btn-active-bg); color: var(--btn-active-fg); }
+        .play-btn:disabled { color: var(--btn-disabled-fg); border-color: var(--btn-disabled-border); cursor: not-allowed; background: var(--btn-disabled-bg); }
+        .play-btn svg { width: 20px; height: 20px; fill: currentColor; }
+
+        .hint { font-size: 14px; color: var(--hint-color); margin-bottom: 20px; font-weight: var(--hint-weight); }
+        .status { margin-bottom: 15px; font-weight: var(--font-w); font-size: 16px; min-height: 24px; }
+        .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        button.action-btn { 
+            padding: 14px 20px; font-size: 16px; 
+            border: 3px solid var(--fg); background-color: var(--btn-bg); color: var(--fg);
+            border-radius: var(--radius); cursor: pointer; font-weight: var(--font-w);
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: all .2s;
+        }
+        body.theme-color button.action-btn { border-width: 2px; border-radius: 8px; }
+        button.action-btn:active { background-color: var(--btn-active-bg); color: var(--btn-active-fg); }
+        button.action-btn svg { width: 16px; height: 16px; fill: currentColor; }
+        button.reshuffle-btn { font-size: 14px; padding: 10px 18px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .btn-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .grid-btn { justify-content: center; width: 100%; padding: 12px 8px !important; font-size: 15px !important; }
+        button:disabled { background-color: var(--btn-disabled-bg) !important; color: var(--btn-disabled-fg) !important; border-color: var(--btn-disabled-border) !important; }
+
+        .reset-link { 
+            margin-top: 20px; display: inline-flex; align-items: center; gap: 4px;
+            font-size: 14px; color: var(--reset-color); text-decoration: none; cursor: pointer; font-weight: bold;
+            border-bottom: 2px solid var(--reset-color); padding-bottom: 2px;
+        }
+        body.theme-color .reset-link { text-decoration: underline; border-bottom: none; font-size: 12px; }
+        .reset-link svg { width: 14px; height: 14px; fill: currentColor; }
+
+        /* ===== 参考表 ===== */
+        .ref-section { margin-bottom: 24px; }
+        .ref-section-title { font-size: 16px; font-weight: var(--font-w); text-align: left; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid var(--setting-border); }
+        .ref-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; }
+        .ref-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 14px 6px; border: 2px solid var(--card-border); border-radius: var(--radius);
+            background: var(--card-bg); cursor: pointer; transition: all .15s;
+            -webkit-user-select: none; user-select: none;
+        }
+        .ref-item:active { background: var(--btn-active-bg); color: var(--btn-active-fg); }
+        body.theme-color .ref-item { border-width: 1.5px; border-radius: 8px; }
+        .ref-char { font-size: 28px; font-weight: var(--font-w); line-height: 1.2; }
+        .ref-morse { font-family: "Courier New", Courier, monospace; font-size: 16px; font-weight: bold; color: var(--fg); margin-top: 6px; letter-spacing: 2px; }
+        .ref-item.playing { background: var(--btn-active-bg); color: var(--btn-active-fg); }
+        .ref-item.playing .ref-morse { color: var(--btn-active-fg); }
+
+        /* ===== 设置页 ===== */
+        .settings-panel { text-align: left; padding: 10px 0; }
+        .setting-item { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; border-bottom: var(--border-w) solid var(--setting-border); }
+        .setting-item:last-child { border-bottom: none; }
+        .setting-label { font-size: 18px; font-weight: var(--font-w); color: var(--fg); }
+        body.theme-color .setting-label { font-size: 16px; }
+        .setting-desc { font-size: 13px; color: var(--setting-desc-color); margin-top: 4px; font-weight: var(--setting-desc-weight); }
+        
+        .stepper-group { display: flex; align-items: center; gap: 10px; }
+        .stepper-val { min-width: 80px; text-align: center; font-weight: var(--font-w); color: var(--fg); font-size: 18px; }
+        body.theme-color .stepper-val { min-width: 70px; font-size: 16px; }
+        .step-btn { 
+            width: 44px; height: 44px; border: 3px solid var(--fg); background: var(--step-bg); 
+            border-radius: var(--radius); font-size: 24px; font-weight: var(--font-w); cursor: pointer; 
+            display: flex; align-items: center; justify-content: center; line-height: 1; padding: 0;
+            transition: all .2s;
+        }
+        body.theme-color .step-btn { width: 36px; height: 36px; border-width: 2px; border-radius: 50%; }
+        .step-btn:active { background: var(--step-active-bg); color: var(--step-active-fg); }
+        .step-btn:disabled { color: var(--btn-disabled-fg); border-color: var(--btn-disabled-border); background: var(--btn-disabled-bg); cursor: not-allowed; }
+        .step-btn svg { width: 20px; height: 20px; fill: currentColor; }
+
+        /* ===== 开关 ===== */
+        .toggle-switch { position: relative; width: 56px; height: 32px; }
+        body.theme-color .toggle-switch { width: 50px; height: 28px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { 
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; 
+            background-color: var(--toggle-bg); border: 3px solid var(--fg); transition: .2s; 
+        }
+        body.theme-color .toggle-slider { border-width: 0; border-radius: 28px; }
+        .toggle-slider:before { 
+            position: absolute; content: ""; height: 22px; width: 22px; 
+            left: 3px; bottom: 2px; background-color: var(--toggle-knob); transition: .2s; 
+        }
+        body.theme-color .toggle-slider:before { border-radius: 50%; }
+        .toggle-switch input:checked + .toggle-slider { background-color: var(--toggle-active-bg); }
+        .toggle-switch input:checked + .toggle-slider:before { transform: translateX(24px); background-color: var(--toggle-active-knob); }
+        body.theme-color .toggle-switch input:checked + .toggle-slider:before { transform: translateX(22px); }
+    </style>
+</head>
+<body>
+
+    <h1 id="appTitle">CW 摩斯密码闪卡</h1>
+
+    <div class="mode-switch">
+        <button class="mode-btn active" id="tabKoch" onclick="switchTab('koch')">
+            <svg viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
+            <span class="emoji-icon">📚</span>
+            科赫法
+        </button>
+        <button class="mode-btn" id="tabRandom" onclick="switchTab('random')">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm0-8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+            <span class="emoji-icon">🎲</span>
+            随机练
+        </button>
+        <button class="mode-btn" id="tabRef" onclick="switchTab('ref')">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4 14H9v-2h6v2zm2-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            <span class="emoji-icon">📖</span>
+            参考表
+        </button>
+        <button class="mode-btn" id="tabSettings" onclick="switchTab('settings')">
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            <span class="emoji-icon">⚙️</span>
+            设置
+        </button>
+    </div>
+
+    <!-- ================= 科赫法练习页 ================= -->
+    <div id="viewKoch" class="page-view active">
+        <div class="status" id="levelStatus">当前阶段: 第 1 组 (K, M)</div>
+        <div class="flashcard-container" id="cardKoch" onclick="toggleAnswer('koch')">
+            <div class="text-mini" id="miniKoch"></div>
+            <div class="card-text text-main" id="mainKoch">?</div>
+            <div class="card-text text-answer" id="ansKoch"></div>
+        </div>
+        <!-- 播放 + 提示 -->
+        <div class="play-btn-wrap">
+            <button class="play-btn" id="btnPlayKoch" onclick="handleManualPlay(event, 'koch')">
+                <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                <span class="play-label">播放当前摩斯码</span>
+            </button>
+        </div>
+        <p class="hint">点击卡片切换答案 | 点击按钮重听</p>
+        <!-- 出题模式：2列 -->
+        <div class="btn-grid">
+            <button class="action-btn grid-btn" onclick="nextCard('koch', 'char')">
+                <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0 0 14.07 6H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+                看字猜码
+            </button>
+            <button class="action-btn grid-btn" onclick="nextCard('koch', 'morse')">
+                <svg viewBox="0 0 24 24"><path d="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 9h2V7h-2v2z"/></svg>
+                看码猜字
+            </button>
+        </div>
+        <!-- 导航：3列 -->
+        <div class="btn-grid btn-grid-3">
+            <button class="action-btn grid-btn" onclick="prevLevel()" id="btnPrev">
+                <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                上一组
+            </button>
+            <button class="action-btn grid-btn reshuffle-btn" onclick="reshuffleKoch()">
+                <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                换一题
+            </button>
+            <button class="action-btn grid-btn" onclick="nextLevel()" id="btnNext">
+                下一组
+                <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+            </button>
+        </div>
+        <div style="text-align:center; margin-top:16px;">
+            <span class="reset-link" onclick="resetKochProgress()">
+                <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                重置学习进度
+            </span>
+        </div>
+    </div>
+
+    <!-- ================= 随机练习页 ================= -->
+    <div id="viewRandom" class="page-view">
+        <div class="status" style="visibility:hidden;">占位</div>
+        <div class="flashcard-container" id="cardRandom" onclick="toggleAnswer('random')">
+            <div class="text-mini" id="miniRandom"></div>
+            <div class="card-text text-main" id="mainRandom">?</div>
+            <div class="card-text text-answer" id="ansRandom"></div>
+        </div>
+        <div class="play-btn-wrap">
+            <button class="play-btn" id="btnPlayRandom" onclick="handleManualPlay(event, 'random')">
+                <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                <span class="play-label">播放当前摩斯码</span>
+            </button>
+        </div>
+        <p class="hint">点击卡片切换答案 | 点击按钮重听</p>
+        <div class="btn-grid">
+            <button class="action-btn grid-btn" onclick="nextCard('random', 'char')">
+                <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0 0 14.07 6H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+                看字猜码
+            </button>
+            <button class="action-btn grid-btn" onclick="nextCard('random', 'morse')">
+                <svg viewBox="0 0 24 24"><path d="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 9h2V7h-2v2z"/></svg>
+                看码猜字
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= 参考表页 ================= -->
+    <div id="viewRef" class="page-view">
+        <div class="ref-section">
+            <div class="ref-section-title">字母 A-Z</div>
+            <div class="ref-grid" id="refLetters"></div>
+        </div>
+        <div class="ref-section">
+            <div class="ref-section-title">数字 0-9</div>
+            <div class="ref-grid" id="refDigits"></div>
+        </div>
+        <div class="ref-section">
+            <div class="ref-section-title">符号</div>
+            <div class="ref-grid" id="refSymbols"></div>
+        </div>
+    </div>
+
+    <!-- ================= 设置页 ================= -->
+    <div id="viewSettings" class="page-view">
+        <div class="settings-panel">
+            <div class="setting-item">
+                <div>
+                    <div class="setting-label">界面风格</div>
+                    <div class="setting-desc">切换黑白 / 彩色主题</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <div>
+                    <div class="setting-label">翻卡自动播放</div>
+                    <div class="setting-desc">切换到答案时自动播放</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="autoPlayToggle" onchange="updateAutoPlay(this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <div>
+                    <div class="setting-label">发报速度</div>
+                    <div class="setting-desc">5 ~ 30 WPM · 步进 1</div>
+                </div>
+                <div class="stepper-group">
+                    <button class="step-btn" onclick="adjustParam('wpm', -1)">
+                        <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
+                    </button>
+                    <span class="stepper-val"><span id="wpmVal">15</span> WPM</span>
+                    <button class="step-btn" onclick="adjustParam('wpm', 1)">
+                        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div>
+                    <div class="setting-label">侧音音调</div>
+                    <div class="setting-desc">400 ~ 1000 Hz · 步进 10</div>
+                </div>
+                <div class="stepper-group">
+                    <button class="step-btn" onclick="adjustParam('freq', -10)">
+                        <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
+                    </button>
+                    <span class="stepper-val"><span id="freqVal">600</span> Hz</span>
+                    <button class="step-btn" onclick="adjustParam('freq', 10)">
+                        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div style="text-align:center; margin-top:32px; padding-bottom:20px; font-size:13px; color:var(--mini-color);">
+            <div style="font-weight:var(--font-w);">版本 V1.3</div>
+            <div style="margin-top:4px;">作者：BG4KRL</div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_PREFIX = 'cw_v14_';
+        const kochSequence = [
+            ['K', 'M'], ['R', 'S', 'U'], ['A', 'P', 'T', 'L'], ['O', 'W'],
+            ['I', '.', 'N'], ['J', 'E', '1', 'F'], ['0', 'Y', 'V'],
+            [',', 'G', '5', '/'], ['Q', '9', 'Z', 'H'], ['3', '8', 'B', '?'],
+            ['4', '2', '7', 'C'], ['1', 'D', '6', 'X']
+        ];
+        const morseMap = {
+            'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+            'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+            'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+            'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+            'Y': '-.--', 'Z': '--..',
+            '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-',
+            '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.',
+            '.': '.-.-.-', ',': '--..--', '?': '..--..', '/': '-..-.'
+        };
+        const allChars = Object.keys(morseMap);
+
+        let currentTab = 'koch';
+        let currentLevel = 0;
+        let state = {
+            koch:   { answer: '', questionRaw: '', isMorse: false, morseCode: '' },
+            random: { answer: '', questionRaw: '', isMorse: false, morseCode: '' }
+        };
+        let audioParams = { wpm: 15, freq: 600, autoPlay: true };
+        const PARAM_LIMITS = { wpm: { min: 5, max: 30 }, freq: { min: 400, max: 1000 } };
+
+        // ================= 🎨 主题切换 =================
+        let currentTheme = 'bw'; // 'bw' 或 'color'
+
+        function loadTheme() {
+            try {
+                const t = localStorage.getItem(STORAGE_PREFIX + 'theme');
+                if (t === 'color') currentTheme = 'color';
+            } catch (e) {}
+            applyTheme();
+        }
+
+        function applyTheme() {
+            const toggle = document.getElementById('themeToggle');
+            if (currentTheme === 'color') {
+                document.body.classList.add('theme-color');
+                if (toggle) toggle.checked = true;
+            } else {
+                document.body.classList.remove('theme-color');
+                if (toggle) toggle.checked = false;
+            }
+        }
+
+        function toggleTheme() {
+            const toggle = document.getElementById('themeToggle');
+            currentTheme = toggle && toggle.checked ? 'color' : 'bw';
+            try { localStorage.setItem(STORAGE_PREFIX + 'theme', currentTheme); } catch (e) {}
+            applyTheme();
+        }
+
+        // ================= 💾 缓存管理 =================
+        function loadAllSettings() {
+            try {
+                const sl = localStorage.getItem(STORAGE_PREFIX + 'level');
+                if (sl !== null) { const p = parseInt(sl, 10); if (!isNaN(p) && p >= 0 && p < kochSequence.length) currentLevel = p; }
+                const sw = localStorage.getItem(STORAGE_PREFIX + 'wpm');
+                if (sw !== null) { const v = parseInt(sw, 10); if (!isNaN(v) && v >= PARAM_LIMITS.wpm.min && v <= PARAM_LIMITS.wpm.max) audioParams.wpm = v; }
+                const sf = localStorage.getItem(STORAGE_PREFIX + 'freq');
+                if (sf !== null) { const v = parseInt(sf, 10); if (!isNaN(v) && v >= PARAM_LIMITS.freq.min && v <= PARAM_LIMITS.freq.max) audioParams.freq = v; }
+                const sa = localStorage.getItem(STORAGE_PREFIX + 'autoPlay');
+                if (sa !== null) audioParams.autoPlay = (sa === 'true');
+            } catch (e) {}
+            syncSettingsUI();
+        }
+
+        function saveSetting(key, value) {
+            try { localStorage.setItem(STORAGE_PREFIX + key, String(value)); } catch (e) {}
+        }
+
+        function syncSettingsUI() {
+            document.getElementById('wpmVal').textContent = audioParams.wpm;
+            document.getElementById('freqVal').textContent = audioParams.freq;
+            document.getElementById('autoPlayToggle').checked = audioParams.autoPlay;
+            updateStepBtnState();
+        }
+
+        function updateAutoPlay(checked) {
+            audioParams.autoPlay = checked;
+            saveSetting('autoPlay', checked);
+        }
+
+        // ================= 🔊 CW 音频引擎（参考 lcwo.net/jscwlib 实现）=================
+        let audioCtx = null;
+        let isPlaying = false;
+        let oscillator = null;
+        let gainNode = null;
+        let gainNodePlay = null;
+        let biquadFilter = null;
+
+        function initAudio() {
+            if (audioCtx) return;
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new Ctx();
+
+            // 持续运行的振荡器（lcwo 方式）
+            gainNode = audioCtx.createGain();        // 键控增益（0/1 切换）
+            gainNodePlay = audioCtx.createGain();    // 总音量
+            biquadFilter = audioCtx.createBiquadFilter(); // 低通滤波，平滑音色
+
+            oscillator = audioCtx.createOscillator();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(audioParams.freq, audioCtx.currentTime);
+
+            // 信号链: oscillator -> gainNode -> biquadFilter -> gainNodePlay -> destination
+            oscillator.connect(gainNode);
+            gainNode.connect(biquadFilter);
+            biquadFilter.connect(gainNodePlay);
+            gainNodePlay.connect(audioCtx.destination);
+
+            biquadFilter.type = 'lowpass';
+            biquadFilter.frequency.setValueAtTime(audioParams.freq, audioCtx.currentTime);
+            biquadFilter.Q.setValueAtTime(10, audioCtx.currentTime);
+
+            gainNode.gain.value = 0;           // 初始静音
+            gainNodePlay.gain.value = 0.6;     // 总音量
+
+            oscillator.start();                // 振荡器持续运行
+        }
+
+        function getAudioCtx() {
+            initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            return audioCtx;
+        }
+
+        function playCW(morseStr) {
+            if (isPlaying || !morseStr) return;
+            const ctx = getAudioCtx();
+            const ditDuration = 1.2 / audioParams.wpm;
+            let currentTime = ctx.currentTime + 0.05;
+            isPlaying = true;
+
+            // 更新滤波器频率跟随音调
+            biquadFilter.frequency.setValueAtTime(audioParams.freq, ctx.currentTime);
+            oscillator.frequency.setValueAtTime(audioParams.freq, ctx.currentTime);
+
+            const btns = [document.getElementById('btnPlayKoch'), document.getElementById('btnPlayRandom')];
+            btns.forEach(b => { if (b) { b.disabled = true; b.querySelector('.play-label').textContent = '播放中...'; } });
+
+            // 通过 gainNode 键控：setValueAtTime 精确控制 on/off
+            for (let i = 0; i < morseStr.length; i++) {
+                const c = morseStr[i];
+                if (c === '.' || c === '-') {
+                    const dur = c === '.' ? ditDuration : ditDuration * 3;
+                    // 开启（音头）
+                    gainNode.gain.setValueAtTime(1, currentTime);
+                    // 关闭（音尾）
+                    gainNode.gain.setValueAtTime(0, currentTime + dur);
+                    currentTime += dur + ditDuration; // 符号间隔
+                }
+            }
+
+            // 最后一个符号后的间隔
+            const totalDuration = (currentTime - ctx.currentTime) * 1000;
+            setTimeout(() => {
+                isPlaying = false;
+                btns.forEach(b => { if (b) { b.disabled = false; b.querySelector('.play-label').textContent = '播放当前摩斯码'; } });
+            }, totalDuration);
+        }
+
+        function handleManualPlay(e, mode) {
+            e.stopPropagation();
+            if (state[mode] && state[mode].morseCode) playCW(state[mode].morseCode);
+        }
+
+        function adjustParam(type, delta) {
+            const lim = PARAM_LIMITS[type];
+            const nv = Math.max(lim.min, Math.min(lim.max, audioParams[type] + delta));
+            if (nv !== audioParams[type]) {
+                audioParams[type] = nv;
+                document.getElementById(type === 'wpm' ? 'wpmVal' : 'freqVal').textContent = nv;
+                saveSetting(type, nv);
+                updateStepBtnState();
+            }
+        }
+
+        function updateStepBtnState() {
+            const btns = document.querySelectorAll('.step-btn');
+            btns[0].disabled = audioParams.wpm <= PARAM_LIMITS.wpm.min;
+            btns[1].disabled = audioParams.wpm >= PARAM_LIMITS.wpm.max;
+            btns[2].disabled = audioParams.freq <= PARAM_LIMITS.freq.min;
+            btns[3].disabled = audioParams.freq >= PARAM_LIMITS.freq.max;
+        }
+
+        // ================= Tab 切换 =================
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
+            document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+            document.getElementById('view' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+        }
+
+        // ================= 业务逻辑 =================
+        function resetKochProgress() {
+            if (confirm('确定要将科赫法学习进度重置为第 1 组吗？')) {
+                currentLevel = 0; saveSetting('level', 0); updateKochUI(); nextCard('koch', 'char');
+            }
+        }
+
+        function getUnlockedChars() {
+            let chars = [];
+            for (let i = 0; i <= currentLevel; i++) chars = chars.concat(kochSequence[i]);
+            return chars;
+        }
+
+        function nextCard(mode, type) {
+            const suffix = mode === 'random' ? 'Random' : 'Koch';
+            document.getElementById('card' + suffix).classList.remove('show-answer');
+            const mainEl = document.getElementById('main' + suffix);
+            const pool = mode === 'random' ? allChars : getUnlockedChars();
+            const ch = pool[Math.floor(Math.random() * pool.length)];
+            const morse = morseMap[ch];
+
+            if (type === 'char') {
+                mainEl.textContent = ch;
+                mainEl.classList.remove('morse-font');
+                state[mode] = { answer: morse, questionRaw: ch, isMorse: false, morseCode: morse };
+            } else {
+                mainEl.textContent = morse;
+                mainEl.classList.add('morse-font');
+                state[mode] = { answer: ch, questionRaw: morse, isMorse: true, morseCode: morse };
+            }
+        }
+
+        // 换一题：从所有已解锁字母中随机，保证与当前字母不同，沿用当前出题模式
+        function reshuffleKoch() {
+            const allUnlocked = getUnlockedChars();
+            // 排除当前字母，确保换到不同的
+            const currentChar = state.koch.isMorse ? state.koch.answer : state.koch.questionRaw;
+            const candidates = allUnlocked.filter(c => c !== currentChar);
+            const pool = candidates.length > 0 ? candidates : allUnlocked;
+            const ch = pool[Math.floor(Math.random() * pool.length)];
+            const morse = morseMap[ch];
+            const type = (state.koch.isMorse) ? 'morse' : 'char';
+            document.getElementById('cardKoch').classList.remove('show-answer');
+            const mainEl = document.getElementById('mainKoch');
+            if (type === 'char') {
+                mainEl.textContent = ch;
+                mainEl.classList.remove('morse-font');
+                state.koch = { answer: morse, questionRaw: ch, isMorse: false, morseCode: morse };
+            } else {
+                mainEl.textContent = morse;
+                mainEl.classList.add('morse-font');
+                state.koch = { answer: ch, questionRaw: morse, isMorse: true, morseCode: morse };
+            }
+        }
+
+        function toggleAnswer(mode) {
+            const suffix = mode === 'random' ? 'Random' : 'Koch';
+            const card = document.getElementById('card' + suffix);
+            const showing = !card.classList.contains('show-answer');
+            card.classList.toggle('show-answer');
+
+            if (showing) {
+                document.getElementById('ans' + suffix).textContent = state[mode].answer;
+                const mini = document.getElementById('mini' + suffix);
+                mini.textContent = state[mode].questionRaw;
+                mini.classList.toggle('morse-font', state[mode].isMorse);
+
+                if (audioParams.autoPlay === true) {
+                    playCW(state[mode].morseCode);
+                }
+            }
+        }
+
+        function updateKochUI() {
+            document.getElementById('levelStatus').textContent =
+                `当前阶段: 第 ${currentLevel + 1} 组 (${kochSequence[currentLevel].join(', ')})`;
+            document.getElementById('btnPrev').disabled = (currentLevel === 0);
+            document.getElementById('btnNext').disabled = (currentLevel === kochSequence.length - 1);
+        }
+
+        function nextLevel() {
+            if (currentLevel < kochSequence.length - 1) { currentLevel++; saveSetting('level', currentLevel); updateKochUI(); nextCard('koch', 'char'); }
+        }
+        function prevLevel() {
+            if (currentLevel > 0) { currentLevel--; saveSetting('level', currentLevel); updateKochUI(); nextCard('koch', 'char'); }
+        }
+
+        // ================= 参考表 =================
+        function buildRefTable() {
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            const digits = '0123456789'.split('');
+            const symbols = ['.', ',', '?', '/'];
+            fillRefGrid('refLetters', letters);
+            fillRefGrid('refDigits', digits);
+            fillRefGrid('refSymbols', symbols);
+        }
+
+        function fillRefGrid(id, chars) {
+            const grid = document.getElementById(id);
+            grid.innerHTML = '';
+            chars.forEach(ch => {
+                const morse = morseMap[ch];
+                if (!morse) return;
+                const div = document.createElement('div');
+                div.className = 'ref-item';
+                div.setAttribute('data-char', ch);
+                div.innerHTML = '<span class="ref-char">' + ch + '</span><span class="ref-morse">' + morse + '</span>';
+                div.addEventListener('click', function () { playRefMorse(ch, div); });
+                grid.appendChild(div);
+            });
+        }
+
+        function playRefMorse(ch, el) {
+            const morse = morseMap[ch];
+            if (!morse || isPlaying) return;
+            el.classList.add('playing');
+            const ctx = getAudioCtx();
+            const ditDuration = 1.2 / audioParams.wpm;
+            let currentTime = ctx.currentTime + 0.05;
+            isPlaying = true;
+            biquadFilter.frequency.setValueAtTime(audioParams.freq, ctx.currentTime);
+            oscillator.frequency.setValueAtTime(audioParams.freq, ctx.currentTime);
+            for (let i = 0; i < morse.length; i++) {
+                const c = morse[i];
+                if (c === '.' || c === '-') {
+                    const dur = c === '.' ? ditDuration : ditDuration * 3;
+                    gainNode.gain.setValueAtTime(1, currentTime);
+                    gainNode.gain.setValueAtTime(0, currentTime + dur);
+                    currentTime += dur + ditDuration;
+                }
+            }
+            const totalDuration = (currentTime - ctx.currentTime) * 1000;
+            setTimeout(() => {
+                isPlaying = false;
+                el.classList.remove('playing');
+            }, totalDuration);
+        }
+
+        window.onload = function () {
+            loadTheme();
+            loadAllSettings();
+            updateKochUI();
+            nextCard('koch', 'char');
+            nextCard('random', 'char');
+            buildRefTable();
+        };
+    </script>
+</body>
+</html>
