@@ -232,11 +232,12 @@
         }
         .drawer-title { font-size: 20px; font-weight: var(--font-w); }
         .drawer-close {
-            width: 36px; height: 36px; border: 2px solid var(--fg); background: transparent;
+            width: 36px; height: 36px; min-width: 36px; flex-shrink: 0;
+            border: 2px solid var(--fg); background: transparent;
             border-radius: var(--radius); cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             font-size: 20px; font-weight: var(--font-w); color: var(--fg); line-height: 1;
-            transition: all .2s;
+            padding: 0; transition: all .2s;
         }
         body.theme-color .drawer-close { border-radius: 50%; }
         .drawer-close:active { background: var(--btn-active-bg); color: var(--btn-active-fg); }
@@ -597,13 +598,12 @@
 
         function getAudioCtx() {
             initAudio();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            return audioCtx;
+            return audioCtx.state === 'suspended' ? audioCtx.resume().then(() => audioCtx) : Promise.resolve(audioCtx);
         }
 
-        function playCW(morseStr) {
+        async function playCW(morseStr) {
             if (isPlaying || !morseStr) return;
-            const ctx = getAudioCtx();
+            const ctx = await getAudioCtx();
             const ditDuration = 1.2 / audioParams.wpm;
             let currentTime = ctx.currentTime + 0.05;
             isPlaying = true;
@@ -792,11 +792,11 @@
             });
         }
 
-        function playRefMorse(ch, el) {
+        async function playRefMorse(ch, el) {
             const morse = morseMap[ch];
             if (!morse || isPlaying) return;
             el.classList.add('playing');
-            const ctx = getAudioCtx();
+            const ctx = await getAudioCtx();
             const ditDuration = 1.2 / audioParams.wpm;
             let currentTime = ctx.currentTime + 0.05;
             isPlaying = true;
