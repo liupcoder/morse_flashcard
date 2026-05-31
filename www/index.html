@@ -222,7 +222,7 @@
             width: min(85vw, 380px); background: var(--bg); z-index: 1001;
             transform: translateX(100%); transition: transform .3s ease;
             overflow-y: auto; -webkit-overflow-scrolling: touch;
-            padding: 20px; box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+            padding: 20px; padding-top: calc(20px + env(safe-area-inset-top)); box-shadow: -4px 0 20px rgba(0,0,0,0.15);
         }
         .drawer-overlay.open .drawer-panel { transform: translateX(0); }
         .drawer-header {
