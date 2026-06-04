@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>CW 摩斯密码闪卡 V1.4</title>
+    <title>CW 摩斯密码闪卡 V1.5</title>
     <style>
         /* ========== 主题变量 ========== */
         body {
@@ -463,8 +463,9 @@
             </div>
         </div>
         <div style="text-align:center; margin-top:32px; padding-bottom:20px; font-size:13px; color:var(--mini-color);">
-            <div style="font-weight:var(--font-w);">版本 V1.4</div>
+            <div style="font-weight:var(--font-w);">版本 V1.5</div>
             <div style="margin-top:4px;">作者：BG4KRL</div>
+            <div style="margin-top:8px;"><a href="https://github.com/liupcoder/morse_flashcard" target="_blank" rel="noopener" style="color:var(--fg); text-decoration:underline; font-weight:var(--font-w);">开源地址 (GitHub)</a></div>
         </div>
     </div>
     </div>
@@ -566,6 +567,22 @@
         let gainNodePlay = null;
         let biquadFilter = null;
 
+        function destroyAudio() {
+            if (audioCtx) {
+                try { oscillator && oscillator.stop(); } catch (e) {}
+                try { audioCtx.close(); } catch (e) {}
+            }
+            audioCtx = null;
+            oscillator = null;
+            gainNode = null;
+            gainNodePlay = null;
+            biquadFilter = null;
+            isPlaying = false;
+            // 重置播放按钮状态
+            const btns = [document.getElementById('btnPlayKoch'), document.getElementById('btnPlayRandom')];
+            btns.forEach(b => { if (b) { b.disabled = false; b.querySelector('.play-label').textContent = '播放当前摩斯码'; } });
+        }
+
         function initAudio() {
             if (audioCtx) return;
             const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -595,6 +612,13 @@
 
             oscillator.start();                // 振荡器持续运行
         }
+
+        // iOS 后台返回后重建音频引擎
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) {
+                destroyAudio();
+            }
+        });
 
         function getAudioCtx() {
             initAudio();
@@ -680,6 +704,16 @@
             document.getElementById('view' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
         }
 
+        // ================= 摩尔斯码字号自适应 =================
+        function applyMorseSize(el, morseStr) {
+            const len = morseStr.length;
+            let size = 90;
+            if (len >= 6) size = 50;
+            else if (len === 5) size = 65;
+            el.style.fontSize = size + 'px';
+            el.style.letterSpacing = (len >= 5 ? 5 : 8) + 'px';
+        }
+
         // ================= 业务逻辑 =================
         function resetKochProgress() {
             if (confirm('确定要将科赫法学习进度重置为第 1 组吗？')) {
@@ -704,10 +738,13 @@
             if (type === 'char') {
                 mainEl.textContent = ch;
                 mainEl.classList.remove('morse-font');
+                mainEl.style.fontSize = '';
+                mainEl.style.letterSpacing = '';
                 state[mode] = { answer: morse, questionRaw: ch, isMorse: false, morseCode: morse };
             } else {
                 mainEl.textContent = morse;
                 mainEl.classList.add('morse-font');
+                applyMorseSize(mainEl, morse);
                 state[mode] = { answer: ch, questionRaw: morse, isMorse: true, morseCode: morse };
             }
         }
@@ -727,10 +764,13 @@
             if (type === 'char') {
                 mainEl.textContent = ch;
                 mainEl.classList.remove('morse-font');
+                mainEl.style.fontSize = '';
+                mainEl.style.letterSpacing = '';
                 state.koch = { answer: morse, questionRaw: ch, isMorse: false, morseCode: morse };
             } else {
                 mainEl.textContent = morse;
                 mainEl.classList.add('morse-font');
+                applyMorseSize(mainEl, morse);
                 state.koch = { answer: ch, questionRaw: morse, isMorse: true, morseCode: morse };
             }
         }
